@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { GameCanvas } from "@/components/GameCanvas";
 import { LevelSelect } from "@/components/LevelSelect";
 import { LEVELS } from "@/lib/game-engine";
@@ -16,6 +17,8 @@ export default function Home() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [playerName, setPlayerName] = useState("");
+  const [logoClicks, setLogoClicks] = useState(0);
+  const [, setLocation] = useLocation();
   
   // Queries
   const { data: leaderboardData } = useLeaderboard();
@@ -71,7 +74,20 @@ export default function Home() {
       </div>
 
       <header className="relative z-10 w-full p-6 flex justify-between items-center border-b border-white/5 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
+        <div 
+          className="flex items-center gap-3 cursor-pointer select-none" 
+          onClick={() => {
+            const newClicks = logoClicks + 1;
+            if (newClicks >= 3) {
+              setLocation("/admin");
+              setLogoClicks(0);
+            } else {
+              setLogoClicks(newClicks);
+              // Reset after 2 seconds of inactivity
+              setTimeout(() => setLogoClicks(0), 2000);
+            }
+          }}
+        >
           <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-primary/25">
             <svg viewBox="0 0 24 24" className="w-6 h-6 text-white fill-current">
               <path d="M12 2L2 22h20L12 2zm0 3l7.5 15h-15L12 5z"/>
