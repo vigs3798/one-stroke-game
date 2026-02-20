@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertLeaderboardSchema, leaderboard } from './schema';
+import { insertLeaderboardSchema, leaderboard, insertLevelSchema, levels } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -33,6 +33,38 @@ export const api = {
       },
     },
   },
+  admin: {
+    levels: {
+      list: {
+        method: 'GET' as const,
+        path: '/api/admin/levels' as const,
+        responses: {
+          200: z.array(z.custom<typeof levels.$inferSelect>()),
+        },
+      },
+      update: {
+        method: 'POST' as const,
+        path: '/api/admin/levels' as const,
+        input: insertLevelSchema,
+        responses: {
+          200: z.custom<typeof levels.$inferSelect>(),
+          400: errorSchemas.validation,
+        },
+      },
+    },
+    stats: {
+      get: {
+        method: 'GET' as const,
+        path: '/api/admin/stats' as const,
+        responses: {
+          200: z.object({
+            totalPlayers: z.number(),
+            avgLevel: z.number(),
+          }),
+        },
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
@@ -50,3 +82,7 @@ export function buildUrl(path: string, params?: Record<string, string | number>)
 export type LeaderboardInput = z.infer<typeof api.leaderboard.create.input>;
 export type LeaderboardResponse = z.infer<typeof api.leaderboard.create.responses[201]>;
 export type LeaderboardListResponse = z.infer<typeof api.leaderboard.list.responses[200]>;
+
+export type LevelInput = z.infer<typeof api.admin.levels.update.input>;
+export type LevelResponse = z.infer<typeof api.admin.levels.update.responses[200]>;
+export type StatsResponse = z.infer<typeof api.admin.stats.get.responses[200]>;
