@@ -1,0 +1,169 @@
+You are building a complete playable web game called **One-Stroke Network**.
+
+The game is a computational-thinking puzzle based on Euler paths (graph traversal).
+The player must draw a path that uses every edge exactly once.
+
+This is NOT a drawing toy — it is a deterministic graph engine with validation logic.
+
+---
+
+## TECH STACK
+
+Use:
+
+* HTML
+* CSS
+* Vanilla JavaScript
+* Canvas API (no external libraries)
+
+Everything must run locally in one page:
+index.html
+style.css
+game.js
+
+---
+
+## GAME RULES
+
+1. The screen shows nodes (circles) connected by edges (lines).
+2. Player drags from node to node.
+3. A move is valid ONLY if:
+
+   * there is an unused edge between nodes
+   * the edge has not already been traversed
+4. The level is solved when ALL edges are used exactly once.
+5. If player gets stuck → show "No more valid moves" and allow restart.
+6. Player cannot teleport or cross empty space.
+
+---
+
+## GRAPH ENGINE (IMPORTANT)
+
+Implement a real graph data structure:
+
+Node:
+{
+id: number,
+x: number,
+y: number,
+degree: number
+}
+
+Edge:
+{
+id: number,
+a: nodeId,
+b: nodeId,
+used: boolean
+}
+
+Level:
+{
+nodes: [],
+edges: [],
+startNodes: optional array
+}
+
+DO NOT hardcode win conditions.
+Win must be computed by checking all edges.used == true
+
+---
+
+## VALIDATION LOGIC
+
+When player attempts move from A to B:
+
+1. Check edge exists
+2. Check edge.used == false
+3. Mark edge used
+4. Add to path history
+
+If invalid:
+
+* flash red
+* do not move
+
+---
+
+## PLAYER INTERACTION
+
+Controls:
+
+* Mouse drag OR touch drag
+* Path visually follows cursor
+* Traversed edges change color
+* Current node highlighted
+
+Buttons:
+Restart
+Next Level
+Level Select
+
+---
+
+## VISUAL FEEDBACK
+
+Unused edge: gray
+Used edge: blue
+Current node: yellow
+Completed level: green animation
+
+---
+
+## LEVEL DESIGN (CRITICAL)
+
+Create 10 INTERMEDIATE DIFFICULTY levels.
+
+Rules:
+
+* Every level must be solvable by Euler path or Euler circuit
+* Some levels must start at specific nodes (odd degree nodes)
+* Increasing complexity:
+  Level 1: 5 nodes
+  Level 2: branching
+  Level 3: multiple odd vertices
+  Level 4: misleading dead ends
+  Level 5: symmetric graph trap
+  Level 6: 2 valid start nodes only
+  Level 7: dense graph
+  Level 8: nearly complete graph
+  Level 9: long corridor + cluster
+  Level 10: complex mixed structure
+
+Define levels as JSON objects inside game.js.
+
+---
+
+## GAME FLOW
+
+Start → Level Select → Play → Win → Next Level
+
+Store progress in localStorage.
+
+---
+
+## ALGORITHMIC REQUIREMENTS
+
+Implement function:
+getValidNeighbors(nodeId)
+remainingEdges()
+isLevelComplete()
+hasValidMoves()
+
+Game must detect softlock:
+If no valid moves and edges remain → fail state
+
+---
+
+## EXTRA (OPTIONAL BUT PREFERRED)
+
+Show hint:
+Display number of odd-degree nodes remaining
+
+---
+
+## OUTPUT REQUIREMENT
+
+Write complete working code.
+No pseudocode.
+All files fully implemented.
