@@ -8,24 +8,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Seed initial leaderboard data
-  const existingScores = await storage.getTopScores();
-  if (existingScores.length === 0) {
-    await storage.createScore({ playerName: "EulerMaster", levelReached: 10 });
-    await storage.createScore({ playerName: "PathFinder", levelReached: 8 });
-    await storage.createScore({ playerName: "GraphNewbie", levelReached: 3 });
-  }
+  // Solutions and initial scores are now handled by the storage class seeding.
 
-  // Seed initial level solutions for admin
-  const existingLevels = await storage.getLevels();
-  if (existingLevels.length === 0) {
-    // Level 1: 5 nodes (e.g., house shape)
-    await storage.updateLevel({
-      levelNumber: 1,
-      solution: [0, 1, 2, 3, 0, 2, 4, 3], // Example path
-      hints: ["Start at the bottom left", "Visit the roof last"],
-    });
-  }
 
   app.get(api.leaderboard.list.path, async (req, res) => {
     try {

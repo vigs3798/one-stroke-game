@@ -1,14 +1,26 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
-import * as schema from "@shared/schema";
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
-const { Pool } = pg;
+dotenv.config();
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/asset_manager_game';
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('MongoDB connection error:', err));
+
+const leaderboardSchema = new mongoose.Schema({
+  playerName: { type: String, required: true },
+  levelReached: { type: Number, required: true },
+  totalTimeTaken: { type: Number, default: 0 },
+  completedAt: { type: Date, default: Date.now },
+});
+
+const levelSchema = new mongoose.Schema({
+  levelNumber: { type: Number, required: true, unique: true },
+  solution: { type: [Number], required: true },
+  hints: { type: [String] },
+});
+
+export const Leaderboard = mongoose.model('Leaderboard', leaderboardSchema);
+export const Level = mongoose.model('Level', levelSchema);

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertLeaderboardSchema, leaderboard, insertLevelSchema, levels } from './schema';
+import { insertLeaderboardSchema, insertLevelSchema, type LeaderboardEntry, type Level, leaderboardSchema, levelSchema } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -20,7 +20,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/leaderboard' as const,
       responses: {
-        200: z.array(z.custom<typeof leaderboard.$inferSelect>()),
+        200: z.array(leaderboardSchema),
       },
     },
     create: {
@@ -28,7 +28,7 @@ export const api = {
       path: '/api/leaderboard' as const,
       input: insertLeaderboardSchema,
       responses: {
-        201: z.custom<typeof leaderboard.$inferSelect>(),
+        201: leaderboardSchema,
         400: errorSchemas.validation,
       },
     },
@@ -39,7 +39,7 @@ export const api = {
         method: 'GET' as const,
         path: '/api/admin/levels' as const,
         responses: {
-          200: z.array(z.custom<typeof levels.$inferSelect>()),
+          200: z.array(levelSchema),
         },
       },
       update: {
@@ -47,7 +47,7 @@ export const api = {
         path: '/api/admin/levels' as const,
         input: insertLevelSchema,
         responses: {
-          200: z.custom<typeof levels.$inferSelect>(),
+          200: levelSchema,
           400: errorSchemas.validation,
         },
       },

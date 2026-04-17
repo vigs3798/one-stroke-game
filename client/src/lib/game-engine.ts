@@ -22,149 +22,122 @@ export interface LevelData {
   nodes: Node[];
   edges: [number, number][]; // Simple tuple definition for config
   startNodes?: number[]; // If restricted
+  timeLimit: number; // in seconds
 }
 
 // Generate edge ID consistently
-export const getEdgeId = (a: number, b: number) => 
+export const getEdgeId = (a: number, b: number) =>
   `${Math.min(a, b)}-${Math.max(a, b)}`;
 
 // Levels Configuration
 export const LEVELS: LevelData[] = [
   {
-    id: 1,
+    id: 1, // Square with Cross (Solvable Circuit)
+    timeLimit: 50,
     nodes: [
-      { id: 0, x: 100, y: 300 },
-      { id: 1, x: 300, y: 100 },
-      { id: 2, x: 500, y: 300 },
-      { id: 3, x: 300, y: 500 },
-      { id: 4, x: 300, y: 300 },
+      { id: 0, x: 200, y: 400 }, { id: 1, x: 400, y: 400 },
+      { id: 2, x: 400, y: 200 }, { id: 3, x: 200, y: 200 },
+      { id: 4, x: 300, y: 340 },
     ],
-    edges: [[0,1], [1,2], [2,3], [3,0], [0,4], [1,4], [2,4], [3,4]],
+    edges: [[0, 1], [1, 2], [2, 3], [3, 0], [0, 4], [1, 4], [2, 4], [3, 4], [0, 2], [1, 3]],
   },
   {
-    id: 2, // The House (Euler path classic)
+    id: 2, // Solvable House
+    timeLimit: 45,
     nodes: [
-      { id: 0, x: 200, y: 400 }, // bottom left
-      { id: 1, x: 400, y: 400 }, // bottom right
-      { id: 2, x: 400, y: 200 }, // top right
-      { id: 3, x: 200, y: 200 }, // top left
-      { id: 4, x: 300, y: 100 }, // roof tip
+      { id: 0, x: 200, y: 400 }, { id: 1, x: 400, y: 400 },
+      { id: 2, x: 400, y: 200 }, { id: 3, x: 200, y: 200 },
+      { id: 4, x: 300, y: 100 },
     ],
-    edges: [[0,1], [1,2], [2,3], [3,0], [2,4], [3,4], [0,2], [1,3]], // Cross in middle too
+    edges: [[0, 1], [1, 2], [2, 3], [3, 0], [0, 2], [1, 3], [2, 4], [3, 4]],
   },
   {
-    id: 3, // The Bowtie
+    id: 3, // Butterfly Plus
+    timeLimit: 40,
     nodes: [
-      { id: 0, x: 100, y: 150 },
-      { id: 1, x: 100, y: 450 },
-      { id: 2, x: 300, y: 300 }, // center
-      { id: 3, x: 500, y: 150 },
-      { id: 4, x: 500, y: 450 },
+      { id: 0, x: 150, y: 300 }, { id: 1, x: 150, y: 450 },
+      { id: 2, x: 300, y: 300 }, // Hub
+      { id: 3, x: 450, y: 300 }, { id: 4, x: 450, y: 450 },
+      { id: 5, x: 300, y: 150 },
     ],
-    edges: [[0,1], [0,2], [1,2], [2,3], [2,4], [3,4]],
+    edges: [[0, 1], [1, 2], [2, 0], [2, 3], [3, 4], [4, 2], [0, 5], [5, 2]],
   },
   {
-    id: 4, // Star
+    id: 4, // Pentagram Star (Circuit)
+    timeLimit: 35,
     nodes: [
-      { id: 0, x: 300, y: 100 },
-      { id: 1, x: 490, y: 240 },
-      { id: 2, x: 420, y: 460 },
-      { id: 3, x: 180, y: 460 },
-      { id: 4, x: 110, y: 240 },
+      { id: 0, x: 300, y: 100 }, { id: 1, x: 500, y: 240 },
+      { id: 2, x: 450, y: 460 }, { id: 3, x: 150, y: 460 },
+      { id: 4, x: 100, y: 240 },
     ],
-    edges: [[0,2], [0,3], [1,3], [1,4], [2,4]],
+    edges: [[0, 2], [2, 4], [4, 1], [1, 3], [3, 0], [0, 1], [1, 2], [2, 3], [3, 4], [4, 0]],
   },
   {
-    id: 5, // Envelope with flap
+    id: 5, // Diamond Web
+    timeLimit: 30,
     nodes: [
-      { id: 0, x: 150, y: 400 },
-      { id: 1, x: 450, y: 400 },
-      { id: 2, x: 450, y: 200 },
-      { id: 3, x: 150, y: 200 },
-      { id: 4, x: 300, y: 100 }, // flap
-      { id: 5, x: 300, y: 300 }, // center cross
+      { id: 0, x: 300, y: 100 }, { id: 1, x: 500, y: 300 },
+      { id: 2, x: 300, y: 500 }, { id: 3, x: 100, y: 300 },
+      { id: 4, x: 300, y: 200 }, { id: 5, x: 300, y: 400 },
     ],
-    edges: [[0,1], [1,2], [2,3], [3,0], [3,4], [2,4], [0,5], [2,5], [1,5], [3,5]],
+    edges: [[0, 1], [1, 2], [2, 3], [3, 0], [0, 4], [4, 5], [5, 2], [4, 1], [4, 3], [5, 1], [5, 3]],
   },
   {
-    id: 6, // Hexa-web
+    id: 6, // Hexagon Web (Solvable)
+    timeLimit: 25,
     nodes: [
-      { id: 0, x: 300, y: 300 }, // center
-      { id: 1, x: 300, y: 100 },
-      { id: 2, x: 473, y: 200 },
-      { id: 3, x: 473, y: 400 },
-      { id: 4, x: 300, y: 500 },
-      { id: 5, x: 127, y: 400 },
-      { id: 6, x: 127, y: 200 },
+      { id: 0, x: 300, y: 100 }, { id: 1, x: 500, y: 200 },
+      { id: 2, x: 500, y: 400 }, { id: 3, x: 300, y: 500 },
+      { id: 4, x: 100, y: 400 }, { id: 5, x: 100, y: 200 },
+      { id: 6, x: 320, y: 310 },
+    ],
+    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [0, 6], [1, 6], [3, 6], [4, 6], [0, 3], [1, 4]],
+  },
+  {
+    id: 7, // Hourglass Pro Plus
+    timeLimit: 20,
+    nodes: [
+      { id: 0, x: 200, y: 100 }, { id: 1, x: 400, y: 100 },
+      { id: 2, x: 300, y: 300 }, { id: 3, x: 200, y: 500 },
+      { id: 4, x: 400, y: 500 }, { id: 5, x: 100, y: 100 },
+      { id: 6, x: 500, y: 100 },
+    ],
+    edges: [[0, 1], [1, 2], [2, 0], [2, 3], [3, 4], [4, 2], [0, 5], [5, 2], [1, 6], [6, 2], [0, 3]],
+  },
+  {
+    id: 8, // Intermediate Ribbon Loop
+    timeLimit: 25,
+    nodes: [
+      { id: 0, x: 100, y: 300 }, { id: 1, x: 200, y: 200 },
+      { id: 2, x: 300, y: 300 }, { id: 3, x: 400, y: 200 },
+      { id: 4, x: 500, y: 300 }, { id: 5, x: 300, y: 100 },
+    ],
+    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [1, 3], [2, 5], [5, 1], [5, 3], [0, 2], [2, 4]],
+  },
+  {
+    id: 9, // Complex Shield
+    timeLimit: 20,
+    nodes: [
+      { id: 0, x: 300, y: 100 }, { id: 1, x: 500, y: 300 },
+      { id: 2, x: 300, y: 500 }, { id: 3, x: 100, y: 300 },
+      { id: 4, x: 300, y: 300 }, { id: 5, x: 200, y: 180 },
+      { id: 6, x: 400, y: 180 },
+    ],
+    edges: [[0, 1], [1, 2], [2, 3], [3, 0], [0, 4], [1, 4], [0, 5], [5, 4], [0, 6], [6, 4]],
+  },
+  {
+    id: 10, // Circular Network Finale
+    timeLimit: 20,
+    nodes: [
+      { id: 0, x: 300, y: 100 }, { id: 1, x: 470, y: 200 },
+      { id: 2, x: 470, y: 400 }, { id: 3, x: 300, y: 500 },
+      { id: 4, x: 130, y: 400 }, { id: 5, x: 130, y: 200 },
+      { id: 6, x: 330, y: 300 },
     ],
     edges: [
-      [1,2], [2,3], [3,4], [4,5], [5,6], [6,1], // outer ring
-      [0,1], [0,2], [0,3], [0,4], [0,5], [0,6]  // spokes
-    ]
-  },
-  {
-    id: 7, // Double House
-    nodes: [
-      { id: 0, x: 100, y: 300 },
-      { id: 1, x: 200, y: 200 },
-      { id: 2, x: 200, y: 400 },
-      { id: 3, x: 300, y: 300 }, // middle join
-      { id: 4, x: 400, y: 200 },
-      { id: 5, x: 400, y: 400 },
-      { id: 6, x: 500, y: 300 },
-    ],
-    edges: [
-      [0,1], [0,2], [1,3], [2,3], [1,2], // left house
-      [3,4], [3,5], [4,6], [5,6], [4,5]  // right house
-    ]
-  },
-  {
-    id: 8, // The Grid 3x3 (with diagonals)
-    nodes: [
-      { id: 0, x: 200, y: 200 }, { id: 1, x: 300, y: 200 }, { id: 2, x: 400, y: 200 },
-      { id: 3, x: 200, y: 300 }, { id: 4, x: 300, y: 300 }, { id: 5, x: 400, y: 300 },
-      { id: 6, x: 200, y: 400 }, { id: 7, x: 300, y: 400 }, { id: 8, x: 400, y: 400 },
-    ],
-    edges: [
-      [0,1], [1,2], [3,4], [4,5], [6,7], [7,8], // horiz
-      [0,3], [3,6], [1,4], [4,7], [2,5], [5,8], // vert
-      [0,4], [4,8], [2,4], [4,6] // diagonals
-    ]
-  },
-  {
-    id: 9, // Complex Crystal
-    nodes: [
-      { id: 0, x: 300, y: 100 },
-      { id: 1, x: 500, y: 250 },
-      { id: 2, x: 400, y: 450 },
-      { id: 3, x: 200, y: 450 },
-      { id: 4, x: 100, y: 250 },
-      { id: 5, x: 300, y: 250 }, // inner top
-      { id: 6, x: 350, y: 350 }, // inner right
-      { id: 7, x: 250, y: 350 }, // inner left
-    ],
-    edges: [
-      [0,1], [1,2], [2,3], [3,4], [4,0], // outer pentagon
-      [0,5], [1,5], [1,6], [2,6], [3,7], [2,7], [4,7], [4,5],
-      [5,6], [6,7], [7,5] // inner triangle
-    ]
-  },
-  {
-    id: 10, // The Final Boss - K5 complete graph (impossible unless modified, so we remove one edge to make it Euler path possible)
-    nodes: [
-      { id: 0, x: 300, y: 100 },
-      { id: 1, x: 490, y: 240 },
-      { id: 2, x: 420, y: 460 },
-      { id: 3, x: 180, y: 460 },
-      { id: 4, x: 110, y: 240 },
-    ],
-    // K5 has 10 edges. All degrees 4. Euler circuit exists.
-    // Let's make it slightly harder by adding a tail.
-    edges: [
-      [0,1], [0,2], [0,3], [0,4],
-      [1,2], [1,3], [1,4],
-      [2,3], [2,4],
-      [3,4]
+      [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0],
+      [0, 6], [1, 6], [2, 6], [3, 6], [4, 6], [5, 6],
+      [0, 3], [1, 4], [2, 5]
     ]
   }
 ];
@@ -173,7 +146,7 @@ export function hasEulerPath(nodes: Node[], edges: Edge[]): boolean {
   // A graph has an Euler path if 0 or 2 vertices have odd degree.
   const degrees = new Map<number, number>();
   nodes.forEach(n => degrees.set(n.id, 0));
-  
+
   edges.forEach(e => {
     degrees.set(e.source, (degrees.get(e.source) || 0) + 1);
     degrees.set(e.target, (degrees.get(e.target) || 0) + 1);
@@ -188,7 +161,7 @@ export function hasEulerPath(nodes: Node[], edges: Edge[]): boolean {
 }
 
 export function getPossibleMoves(currentNodeId: number, edges: Edge[]): Edge[] {
-  return edges.filter(e => 
+  return edges.filter(e =>
     !e.used && (e.source === currentNodeId || e.target === currentNodeId)
   );
 }

@@ -8,11 +8,12 @@ import { Button } from "./ui/button";
 
 interface GameCanvasProps {
   level: LevelData;
-  onComplete: () => void;
+  onComplete: (timeLeft: number) => void;
   onExit: () => void;
+  onFail: () => void;
 }
 
-export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
+export function GameCanvas({ level, onComplete, onExit, onFail }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -21,7 +22,26 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
   const [pathHistory, setPathHistory] = useState<number[]>([]); // Sequence of node IDs
   const [isWon, setIsWon] = useState(false);
   const [message, setMessage] = useState<string>("");
-  const [cursorPos, setCursorPos] = useState<{x: number, y: number} | null>(null);
+  const [cursorPos, setCursorPos] = useState<{ x: number, y: number } | null>(null);
+  const [timeLeft, setTimeLeft] = useState(level.timeLimit);
+  const [isGameOver, setIsGameOver] = useState(false);
+
+  // Timer Effect
+  useEffect(() => {
+    if (isWon || isGameOver) return;
+
+    if (timeLeft <= 0) {
+      setIsGameOver(true);
+      setMessage("TIME EXPIRED!");
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      setTimeLeft(prev => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [timeLeft, isWon, isGameOver]);
 
   // Initialize Level
   useEffect(() => {
@@ -31,7 +51,7 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
   const resetLevel = useCallback(() => {
     // Deep copy nodes
     const initialNodes = level.nodes.map(n => ({ ...n }));
-    
+
     // Create edges with used: false
     const initialEdges = level.edges.map(([a, b]) => ({
       id: getEdgeId(a, b),
@@ -53,6 +73,7 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
     setCurrentNode(null);
     setPathHistory([]);
     setIsWon(false);
+    setIsGameOver(false);
     setMessage("Select a starting node");
   }, [level]);
 
@@ -67,7 +88,6 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
         origin: { y: 0.6 },
         colors: ['#06b6d4', '#8b5cf6', '#d946ef'] // cyan, purple, magenta
       });
-      setTimeout(onComplete, 1500);
     } else if (currentNode !== null) {
       // Check for softlock
       const possibleMoves = getPossibleMoves(currentNode, edges);
@@ -95,7 +115,7 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
         canvas.width = containerRef.current.clientWidth;
         canvas.height = containerRef.current.clientHeight;
       }
-      
+
       // Scaling factor to fit 600x600 game logic into responsive canvas
       const scaleX = canvas.width / 600;
       const scaleY = canvas.height / 600;
@@ -110,6 +130,14 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // 0. Draw Game Over grayscale filter if lost
+      if (isGameOver) {
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1.0;
+      }
+
       // 1. Draw Edges
       edges.forEach(edge => {
         const start = nodes.find(n => n.id === edge.source)!;
@@ -118,7 +146,7 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
         ctx.beginPath();
         ctx.moveTo(tx(start.x), ty(start.y));
         ctx.lineTo(tx(end.x), ty(end.y));
-        
+
         ctx.lineWidth = 4 * scale;
         if (edge.used) {
           ctx.strokeStyle = "#06b6d4"; // Primary Cyan
@@ -129,7 +157,7 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
           ctx.shadowBlur = 0;
         }
         ctx.stroke();
-        
+
         // Reset shadow
         ctx.shadowBlur = 0;
       });
@@ -137,7 +165,7 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
       // 2. Draw Active Drag Line
       if (currentNode !== null && cursorPos && !isWon) {
         const startNode = nodes.find(n => n.id === currentNode)!;
-        
+
         // Raw cursor pos needs to be relative to canvas, but we already have client coords in state
         // Let's just use the inverse transform of the node to get screen coords? 
         // Better: Use pre-calculated screen coords for the node
@@ -159,10 +187,10 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
         const x = tx(node.x);
         const y = ty(node.y);
         const radius = 15 * scale;
-        
+
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
-        
+
         if (node.id === currentNode) {
           ctx.fillStyle = "#facc15"; // Yellow active
           ctx.shadowColor = "#facc15";
@@ -175,22 +203,24 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
           ctx.fillStyle = "#1e293b"; // Dark Slate
           ctx.shadowBlur = 0;
         }
-        
+
         ctx.fill();
         ctx.lineWidth = 2 * scale;
         ctx.strokeStyle = "#ffffff";
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Degree Hint (optional, for debug/tutorial)
-        // ctx.fillStyle = "white";
-        // ctx.font = "12px sans-serif";
-        // ctx.fillText(node.degree?.toString() || "", x - 4, y + 4);
+        // Node ID Label
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.font = `bold ${12 * scale}px font-mono`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(node.id.toString(), x, y);
       });
 
       animationFrameId = requestAnimationFrame(render);
     };
-    
+
     render();
     return () => cancelAnimationFrame(animationFrameId);
   }, [nodes, edges, currentNode, cursorPos, isWon]);
@@ -211,7 +241,7 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
   const getNodeAt = (x: number, y: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
-    
+
     // Reverse transform to get game logic coords
     const scaleX = canvas.width / 600;
     const scaleY = canvas.height / 600;
@@ -223,17 +253,17 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
     const gameY = (y - offsetY) / scale;
 
     // Hit radius tolerance
-    const hitRadius = 30; 
+    const hitRadius = 30;
 
     return nodes.find(n => {
       const dx = n.x - gameX;
       const dy = n.y - gameY;
-      return Math.sqrt(dx*dx + dy*dy) < hitRadius;
+      return Math.sqrt(dx * dx + dy * dy) < hitRadius;
     });
   };
 
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
-    if (isWon) return;
+    if (isWon || isGameOver) return;
     const { x, y } = getCanvasCoords(e);
     const clickedNode = getNodeAt(x, y);
 
@@ -258,7 +288,7 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
   };
 
   const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (isWon) return;
+    if (isWon || isGameOver) return;
     const coords = getCanvasCoords(e);
     setCursorPos(coords);
 
@@ -279,10 +309,10 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
     if (currentNode === null) return;
 
     // Check if edge exists and is unused
-    const edgeIndex = edges.findIndex(e => 
-      !e.used && 
-      ((e.source === currentNode && e.target === targetId) || 
-       (e.source === targetId && e.target === currentNode))
+    const edgeIndex = edges.findIndex(e =>
+      !e.used &&
+      ((e.source === currentNode && e.target === targetId) ||
+        (e.source === targetId && e.target === currentNode))
     );
 
     if (edgeIndex !== -1) {
@@ -304,8 +334,19 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
         <Button variant="ghost" size="icon" onClick={onExit} className="hover:text-primary">
           <Home className="w-5 h-5" />
         </Button>
-        <div className="text-xl font-display text-primary tracking-widest text-glow">
-          {message}
+        <div className="flex flex-col items-center">
+          <div className={cn(
+            "text-xl font-display tracking-widest text-glow transition-colors",
+            isGameOver ? "text-destructive" : "text-primary"
+          )}>
+            {message}
+          </div>
+          <div className={cn(
+            "text-xs font-mono tracking-widest",
+            timeLeft < 10 ? "text-destructive animate-pulse" : "text-muted-foreground"
+          )}>
+            T-MINUS: {timeLeft}s
+          </div>
         </div>
         <Button variant="ghost" size="icon" onClick={resetLevel} className="hover:text-primary">
           <RefreshCw className="w-5 h-5" />
@@ -313,8 +354,8 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
       </div>
 
       {/* Game Board */}
-      <div 
-        ref={containerRef} 
+      <div
+        ref={containerRef}
         className="relative w-full aspect-square bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-[0_0_50px_-12px_rgba(6,182,212,0.2)]"
       >
         <canvas
@@ -328,11 +369,11 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
           onTouchEnd={handleEnd}
           className="cursor-crosshair w-full h-full block touch-none select-none"
         />
-        
+
         {/* Win Overlay */}
         <AnimatePresence>
           {isWon && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
@@ -341,11 +382,35 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
               <h2 className="text-5xl font-display font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-600 mb-6 drop-shadow-2xl">
                 COMPLETE
               </h2>
-              <Button 
-                onClick={onComplete}
+              <Button
+                onClick={() => onComplete(timeLeft)}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-8 py-6 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.5)] animate-pulse"
               >
                 Next Level <ArrowRight className="ml-2 w-6 h-6" />
+              </Button>
+            </motion.div>
+          )}
+          {isGameOver && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-10"
+            >
+              <h2 className="text-5xl font-display font-black text-destructive mb-6 drop-shadow-2xl">
+                TIME UP
+              </h2>
+              <p className="text-slate-400 mb-6 uppercase tracking-widest text-sm font-mono text-center px-8">
+                Logic sequence timed out. Returning to home phase.
+              </p>
+              <Button
+                onClick={() => {
+                  onFail();
+                  onExit();
+                }}
+                className="bg-destructive hover:bg-destructive/90 text-white font-bold text-lg px-8 py-6 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.5)]"
+              >
+                NEURAL REBOOT <RefreshCw className="ml-2 w-6 h-6" />
               </Button>
             </motion.div>
           )}
@@ -353,9 +418,12 @@ export function GameCanvas({ level, onComplete, onExit }: GameCanvasProps) {
       </div>
 
       {/* Footer Info */}
-      <div className="mt-4 text-muted-foreground text-sm font-mono flex gap-4">
+      <div className="mt-4 text-muted-foreground text-sm font-mono flex gap-6">
         <span>NODES: {nodes.length}</span>
         <span>EDGES: {edges.length}</span>
+        <span className={cn(timeLeft < 10 && "text-destructive font-bold")}>
+          LIMIT: {level.timeLimit}s
+        </span>
       </div>
     </div>
   );
